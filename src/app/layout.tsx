@@ -13,11 +13,7 @@ export default function RootLayout({
     return (
         <html lang="ko">
             <head>
-                <link rel="stylesheet" href="https://vjs.zencdn.net/8.16.1/video-js.css" />
-                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
                 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-                <script src="https://vjs.zencdn.net/8.16.1/video.min.js"></script>
-                <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
             </head>
             <body>
                 {children}

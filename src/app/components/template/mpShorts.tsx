@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef} from "react";
+import Swiper from 'swiper';
+import 'swiper/css';
+import videojs from "video.js";
+import 'video.js/dist/video-js.css';
 import "./mpShorts.scss";
-declare const videojs:any;
-declare const Swiper:any;
+
 type T_SHORTS = {title:string,sources:string[]};
-
-
 const wrapperId = "#mpShorts";
 const greenRoomId = "#mpShortsGreenRoom";
 
@@ -21,33 +22,68 @@ const useGreenRoomVideo = (id:string,options:{width:number,height:number}={width
     });
 };
 
-// {width:$(window).width(),height:$(window).height()}
-export default function T_mpShorts({data}:{data:T_SHORTS[]}) {
-    const shortsVideo = useRef();
-    const nextVideo = useRef();
+export default function T_mpShorts(props:{modifier?:string,data:T_SHORTS[]}) {
+    // Props
+    const {modifier,data} = Object.assign({modifier:"",data:[]},props);
+
+    // State, Ref
+
+    const shortsIndex = useRef(0);
+    const shortsVideo = useRef(null);
+    const nextVideo = useRef(null);
+    const swiper = useRef(null);
+
+    // method
     const shortsVideoPlay = () => {
+        console.log(data[shortsIndex.current].sources[0]);
+        shortsVideo.current.src(data[shortsIndex.current].sources[0]);
         shortsVideo.current.play();
     }
+
+    // 숏츠를 현재 슬라이더에 이동시킨다.
+    const appendToShortsVideo = () => {
+        console.log(swiper.current);
+        // console.log( $(swiper.current.$el) );
+    }
+
+    // hooks
     useEffect(()=>{
         shortsVideo.current = useGreenRoomVideo("shorts-video");
         nextVideo.current = useGreenRoomVideo("next-video");
     },[]);
     useEffect(()=>{
-        new Swiper(".swiper-container",{
+        if(data.length==0) return;
+        swiper.current = new Swiper(".swiper-container",{
             direction:"vertical",
-            height:window.outerHeight
+            height:window.outerHeight,
+            on:{
+                afterInit:(swiper)=>{
+                    shortsIndex.current = swiper.realIndex;
+                    console.log('a0');
+                    appendToShortsVideo(); // 숏츠비디오 이동
+                    shortsVideoPlay();
+                }
+            }
+        }).on("slideChangeTransitionEnd",(swiper) => {
+            shortsIndex.current = swiper.realIndex;
+            console.log('a1');
+            appendToShortsVideo(); // 숏츠비디오 이동
+            shortsVideoPlay();
         });
     },[data]);
     useEffect(()=>{
-        console.log(data);
         if(data.length && shortsVideo.current){
             $(".swiper-slide-active .m-mpShorts").append(shortsVideo.current.el_);
             shortsVideo.current.src(data[0].sources[0]);
-            shortsVideoPlay();
+        }
+        if(data.length && nextVideo.current){
+            $(".swiper-slide-next .m-mpShorts").append(nextVideo.current.el_);
+            nextVideo.current.src(data[1].sources[0]);
         }
     });
 
-    return (<section className="p-mpShorts__player t-mpShorts" id="mpShorts">
+    // render
+    return (<section className={`t-mpShorts ${modifier}`} id="mpShorts">
         <div className="t-mpShorts__list swiper-container">
             <div className="swiper-wrapper">
                 {data.map((shorts:T_SHORTS,idx)=>{
