@@ -1,7 +1,7 @@
 "use client"; // mp === mabongpapa
 import { useRef, useEffect, useState } from "react";
 import "./page.scss";
-import ActiveShorts from "./components/organism/activeShorts";
+import T_mpShorts from "./components/template/mpShortsVer2";
 export default function MpShortsPage() {
     const [nowPage,setNowPage] = useState([]);
     const [src,setSrc] = useState("");
@@ -12,37 +12,21 @@ export default function MpShortsPage() {
             setNowPage([...nowPage,...origin.categories[0].videos]);
         });
     };
+
     useEffect(()=>{
         updateData();
     },[]);
 
-
-    let eq = 0;
-    const activeVideoRef = useRef({
-        src:(src:string)=>{},
-        play:()=>{}
-    });
-    const changeSrc = () => {
-        eq++;
-        activeVideoRef.current.src(nowPage[eq].sources[0]);
-        activeVideoRef.current.play();
-    }
-    const moveComponent = () => {
-        const comp = document.querySelector("#activeVideoPlayer");
-        const test = document.querySelector("#test");
-        test.appendChild(comp);
-    };
+    useEffect(()=>{
+        if(nowPage.length == 0) return;
+    },[nowPage]);
 
     return (
-        <div>
-            <button onClick={changeSrc}>바꿔요</button>
-            <button onClick={moveComponent}>옮겨요</button>
-            <div className="p-mpShorts">
-                <ActiveShorts ref={activeVideoRef} id="activeVideoPlayer" src={src} width={400} height={200}></ActiveShorts>
+        <div className="p-mpShorts">
+            <T_mpShorts data={nowPage}></T_mpShorts>
+            <div className="p-mpShorts__tools">
+                <button onClick={updateData}>데이터 밀어넣기</button>
             </div>
-            ---
-            <div className="p-mpShorts" id="test"></div>
         </div>
-        
     );
 }
