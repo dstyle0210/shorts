@@ -6,9 +6,10 @@ import 'video.js/dist/video-js.css';
 import "./mpShorts.scss";
 
 // TODO
-// 1. 화면 회전 구현
-// 2. 음소거 처리
+// 1. 화면 회전 구현(완료)
+// 2. 음소거 처리(완료)
 // 3. 화면 터치시 일시정지 버튼 생성 -> 클릭시 일시정지
+// => 필름에서 스와이핑 할경우 안움직인가?
 
 type T_Video = MutableRefObject<any>;
 type T_SHORTS = {title:string,sources:string[]};
