@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef, forwardRef, useImperativeHandle, MutableRefObject} from "react";
+import { setTimeout, clearTimeout } from "timers";
 import Swiper from 'swiper';
 import 'swiper/css';
 import videojs from "video.js";
@@ -50,9 +51,10 @@ export default forwardRef(function mpShortsVer2(props:{data:any[]},ref) {
         if(swiper.current.destroyed) return;
         const slide = swiper.current.slides[slideIndex];
         if(!slide) return appendGreenRoom(videoRef); // 슬라이드가 없다면, 대기실로 이동
-        slide.appendChild(videoRef.current.el_);
         videoRef.current.poster(getVideoPoster(slideIndex));
         videoRef.current.src(getVideoSrc(slideIndex));
+        slide.appendChild(videoRef.current.el_); // 비디오 넣기
+        if(swiperIndex.current==slideIndex) slide.appendChild(shortsFilmRef.current); // 필름넣기
     };
 
     // 전체숏츠 셋팅
@@ -66,11 +68,61 @@ export default forwardRef(function mpShortsVer2(props:{data:any[]},ref) {
         });
     };
 
-    const useMuted = () => {
-        shortsVideo.current.muted( !shortsVideo.current.muted() );
+    const filmFn = {
+        outTimer:null,
+        classChange:(methodName:"show"|"hold"|"hide",tokens:string[])=>{
+            shortsFilmRef.current.classList[methodName](...tokens);
+        },
+        show:()=>{
+            shortsFilmRef.current.classList.add("-show");
+            filmFn.outTimer = setTimeout(()=>{
+                shortsFilmRef.current.classList.remove("-show");
+            },3000);
+        },
+        hold:()=>{
+            shortsFilmRef.current.classList.add("-hold");
+        },
+        hide:()=>{
+            clearTimeout(filmFn.outTimer);
+            shortsFilmRef.current.classList.remove("-show","-hold");
+        }
     }
 
 
+
+    const fn = {
+        muted:(isMute:boolean) => {
+            if(typeof isMute == "boolean"){
+                shortsVideo.current.muted( isMute );
+            }else{
+                return shortsVideo.current.muted();
+            };
+        },
+        pause:()=>{
+            shortsVideo.current.pause();
+            filmFn.hide();
+            filmFn.hold();
+        },
+        play:()=>{
+            shortsVideo.current.play();
+            filmFn.hide();
+        }
+    }
+
+
+    // Render Function
+    const filmToggle = (e) => {
+        e.stopPropagation();
+        filmFn.show();
+    };
+    const pause = (e) => {
+        e.stopPropagation();
+        fn.pause();
+    };
+    const play = (e) => {
+        e.stopPropagation();
+        fn.play();
+    };
 
     // Hooks
     useEffect(()=>{
@@ -119,9 +171,8 @@ export default forwardRef(function mpShortsVer2(props:{data:any[]},ref) {
         return () => window.removeEventListener('orientationchange', handleOrientationChange);
     }, []);
 
-    useImperativeHandle(ref, () => ({
-        muted:useMuted
-    }))
+    // 부모에게 메소드 전달
+    useImperativeHandle(ref, () => ({muted:fn.muted}));
 
     return (<section className={`t-mpShorts`} id="sample">
         <div className="t-mpShorts__list swiper-container">
@@ -131,9 +182,9 @@ export default forwardRef(function mpShortsVer2(props:{data:any[]},ref) {
                 })}
             </div>
         </div>
-        <div ref={shortsFilmRef} className="t-mpShorts__film">
-            <button className="pauseBtn">일시정지</button>
-            <button className="playBtn">재생</button>
+        <div ref={shortsFilmRef} className="t-mpShorts__film" onClick={filmToggle}>
+            <button className="pauseBtn" onClick={pause}>일시정지</button>
+            <button className="playBtn" onClick={play}>재생</button>
         </div>
         <div ref={greenRoomRef}></div>
     </section>);
