@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef, forwardRef, useImperativeHandle, 
 import Swiper from 'swiper';
 import 'swiper/css';
 import videojs from "video.js";
+import type Player from 'video.js/dist/types/player';
 import 'video.js/dist/video-js.css';
 import "./mpShorts.scss";
 
@@ -11,20 +12,19 @@ import "./mpShorts.scss";
 // 3. 화면 터치시 일시정지 버튼 생성 -> 클릭시 일시정지
 // => 필름에서 스와이핑 할경우 안움직인가?
 
-type T_Video = MutableRefObject<any>;
+type T_Video = MutableRefObject<Player>;
 type T_SHORTS = {title:string,sources:string[]};
 
 export default forwardRef(function mpShortsVer2(props:{data:any[]},ref) {
     const {data} = props;
-    const starter = useRef(false);
-    const swiper = useRef(null);
     const swiperIndex = useRef(0);
-    const greenRoomRef:{current:HTMLDivElement} = useRef();
-    const shortsVideo = useRef(null);
-    const prevVideo = useRef(null);
-    const nextVideo = useRef(null);
-    const shortsFilmRef = useRef();
-    const [orientation, setOrientation] = useState(null);
+    const swiper = useRef<Swiper>();
+    const shortsVideo = useRef<Player>();
+    const prevVideo = useRef<Player>();
+    const nextVideo = useRef<Player>();
+    const greenRoomRef = useRef<HTMLDivElement>(null);
+    const shortsFilmRef = useRef<HTMLDivElement>(null);
+    const [orientation, setOrientation] = useState("portrait-primary");
 
     // 비디오 생성하고, 대기실로 이동
     const createVideoJs = (id:string,options?:{width?:number,height?:number}) => {
@@ -57,7 +57,7 @@ export default forwardRef(function mpShortsVer2(props:{data:any[]},ref) {
 
     // 전체숏츠 셋팅
     const setShorts = (currentIndex:number) => {
-        setTimeout( ()=> {
+        setTimeout( ()=> { // add Queue
             swiperIndex.current = currentIndex; // 인덱스 저장
             setVideoToSlide(shortsVideo,swiperIndex.current); // 현재 숏츠
             setVideoToSlide(prevVideo,swiperIndex.current-1); // 이전 슬라이드 숏츠
@@ -79,10 +79,9 @@ export default forwardRef(function mpShortsVer2(props:{data:any[]},ref) {
             shortsVideo.current.height(window.outerHeight);
         })
     },[orientation]);
-    
+
     useEffect(()=>{
         setTimeout(()=>{ // add Queue
-            console.log("swiper init!");
             swiper.current = new Swiper(".swiper-container",{
                 initialSlide:swiperIndex.current,
                 direction:"vertical",
@@ -99,23 +98,18 @@ export default forwardRef(function mpShortsVer2(props:{data:any[]},ref) {
         
         // CleanUp
         return ()=>{
-            console.log("appendGreenRoom");
             appendGreenRoom(shortsVideo);
             appendGreenRoom(prevVideo);
             appendGreenRoom(nextVideo);
-            console.log("swiper destroy");
             swiper.current.destroy();
         };
     },[data,orientation]);
 
-    
-    
     useEffect(()=>{
         // 비디오 오브젝트 셋팅
         shortsVideo.current = shortsVideo.current ?? createVideoJs("shorts-video");
         prevVideo.current = prevVideo.current ?? createVideoJs("prev-video");
         nextVideo.current = nextVideo.current ?? createVideoJs("next-video");
-        starter.current = true;
     },[]);
 
     useEffect(() => {
@@ -124,8 +118,6 @@ export default forwardRef(function mpShortsVer2(props:{data:any[]},ref) {
         window.addEventListener('orientationchange', handleOrientationChange);
         return () => window.removeEventListener('orientationchange', handleOrientationChange);
     }, []);
-
-
 
     useImperativeHandle(ref, () => ({
         muted:useMuted
