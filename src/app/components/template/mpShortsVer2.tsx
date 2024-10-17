@@ -10,14 +10,29 @@ import "./mpShorts.scss";
 // TODO
 // 1. 화면 회전 구현(완료)
 // 2. 음소거 처리(완료)
-// 3. 화면 터치시 일시정지 버튼 생성 -> 클릭시 일시정지
-// => 필름에서 스와이핑 할경우 안움직인가?
+// 3. 화면 터치시 일시정지 버튼 생성 -> 클릭시 일시정지 (완료)
+
+// 4. 데이터 밀어 넣으면 부셨다가 다시 생성하다보니, 비디오 엘리먼트가 사라짐?
+// => 어디 보냈다가 다시 가져와야 할듯.
+// 5. seek 기능 생성 + seek 비디오 생성(진행율 확인용)
+// => seek 의 길이가 전체 비중이 되어야 함.
+// 6. 플레이가 끝나면 다시재생
+// 7. 일시 정지인 상황에서 스와이핑 되면 안됨.
+
 
 type T_Video = MutableRefObject<Player>;
 type T_SHORTS = {title:string,sources:string[]};
 
-export default forwardRef(function mpShortsVer2(props:{data:any[]},ref) {
-    const {data} = props;
+export default forwardRef(function mpShortsVer2(props_:{data:any[]},ref) {
+    // props
+    const defaultProps = {
+        data:[],
+        orientation:"portrait-primary"
+    };
+    const props = {...defaultProps , ...props_}
+    
+    // computed
+    const data = props.data; // 전달받은 전체 데이터
     const swiperIndex = useRef(0);
     const swiper = useRef<Swiper>();
     const shortsVideo = useRef<Player>();
@@ -25,72 +40,78 @@ export default forwardRef(function mpShortsVer2(props:{data:any[]},ref) {
     const nextVideo = useRef<Player>();
     const greenRoomRef = useRef<HTMLDivElement>(null);
     const shortsFilmRef = useRef<HTMLDivElement>(null);
-    const [orientation, setOrientation] = useState("portrait-primary");
+    const [orientation, setOrientation] = useState(props.orientation);
 
-    // 비디오 생성하고, 대기실로 이동
-    const createVideoJs = (id:string,options?:{width?:number,height?:number}) => {
-        const videoJsOption = Object.assign({width:window.outerWidth,height:window.outerHeight},options);
-        greenRoomRef.current.insertAdjacentHTML("beforeend",`<video id=${id} class="video-js" preload="auto" playsinline></video>`);
-        return videojs(id,videoJsOption,function(){
-            this.muted(true);
-        });
-    };
-
-    // 목록에서 동영상 주소구하기
-    const getVideoSrc = (eq:number) => data[eq].sources[0];
-    const getVideoPoster = (eq:number) => data[eq].thumb;
-    
-    // 숏츠 비디오 그린룸으로 이동
-    const appendGreenRoom = (videoRef:T_Video) => {
-        videoRef.current.pause();
-        greenRoomRef.current.appendChild(videoRef.current.el_);
-    };
-
-    // 슬라이드에 비디오 넣기 + 동영상주소 및 포스터 셋팅
-    const setVideoToSlide = (videoRef:T_Video , slideIndex:number = 0) => {
-        if(swiper.current.destroyed) return;
-        const slide = swiper.current.slides[slideIndex];
-        if(!slide) return appendGreenRoom(videoRef); // 슬라이드가 없다면, 대기실로 이동
-        videoRef.current.poster(getVideoPoster(slideIndex));
-        videoRef.current.src(getVideoSrc(slideIndex));
-        slide.appendChild(videoRef.current.el_); // 비디오 넣기
-        if(swiperIndex.current==slideIndex) slide.appendChild(shortsFilmRef.current); // 필름넣기
-    };
-
-    // 전체숏츠 셋팅
-    const setShorts = (currentIndex:number) => {
-        setTimeout( ()=> { // add Queue
-            swiperIndex.current = currentIndex; // 인덱스 저장
-            setVideoToSlide(shortsVideo,swiperIndex.current); // 현재 숏츠
-            setVideoToSlide(prevVideo,swiperIndex.current-1); // 이전 슬라이드 숏츠
-            setVideoToSlide(nextVideo,swiperIndex.current+1); // 다음 슬라이드 숏츠
-            shortsVideo.current.play(); // 현재 숏츠 재생시작
-        });
-    };
-
-    const filmFn = {
-        outTimer:null,
-        classChange:(methodName:"show"|"hold"|"hide",tokens:string[])=>{
-            shortsFilmRef.current.classList[methodName](...tokens);
+    // Shorts Method
+    const shortsFn = {
+        // video element 및 videojs 생성(대기실에 생성함)
+        createVideoJs(videoId:string,videoJsOption_?:{width?:number,height?:number}){
+            const videoJsOption = {
+                width:window.outerWidth,
+                height:window.outerHeight,
+                ...videoJsOption_
+            };
+            greenRoomRef.current.insertAdjacentHTML("beforeend",`<video id=${videoId} class="video-js" preload="auto" playsinline></video>`);
+            return videojs(videoId,videoJsOption,function(){
+                this.muted(true);
+            });
         },
-        show:()=>{
-            shortsFilmRef.current.classList.add("-show");
-            filmFn.outTimer = setTimeout(()=>{
-                shortsFilmRef.current.classList.remove("-show");
-            },3000);
+        // 비디오 엘리먼트를 대기실로 이동
+        appendGreenRoom(videoRef:T_Video){
+            videoRef.current.pause();
+            greenRoomRef.current.appendChild(videoRef.current.el_);
         },
-        hold:()=>{
-            shortsFilmRef.current.classList.add("-hold");
+        setVideoToSlide(videoRef:T_Video , slideIndex:number = 0){
+            if(swiper.current.destroyed) return; // 스와이퍼가 없다면, 동작 무의미.
+
+            const slide = swiper.current.slides[slideIndex];
+            if(!slide){
+                shortsFn.appendGreenRoom(videoRef); // 슬라이드가 없다면, 대기실로 이동
+            }else{
+                videoRef.current.poster(shortsFn.getVideoPoster(slideIndex));
+                videoRef.current.src(shortsFn.getVideoSrc(slideIndex));
+                slide.appendChild(videoRef.current.el_); // 비디오 넣기
+                if(swiperIndex.current==slideIndex) slide.appendChild(shortsFilmRef.current); // 필름넣기
+            }
         },
-        hide:()=>{
-            clearTimeout(filmFn.outTimer);
-            shortsFilmRef.current.classList.remove("-show","-hold");
-        }
+        setShorts(currentIndex:number){
+            setTimeout( ()=> { // add Queue
+                swiperIndex.current = currentIndex; // 인덱스 저장
+                shortsFn.setVideoToSlide(shortsVideo,swiperIndex.current); // 현재 숏츠
+                shortsFn.setVideoToSlide(prevVideo,swiperIndex.current-1); // 이전 슬라이드 숏츠
+                shortsFn.setVideoToSlide(nextVideo,swiperIndex.current+1); // 다음 슬라이드 숏츠
+                handle.play(); // 현재 숏츠 재생시작
+            });
+        },
+        getVideoSrc:(eq:number) => data[eq].sources[0],
+        getVideoPoster:(eq:number) => data[eq].thumb
     }
 
+    // Handle Function
+    const filmHandle = {
+        outTimer:null,
+        clear:()=>{ // 필름 초기화
+            clearTimeout(filmHandle.outTimer);
+            shortsFilmRef.current.classList.remove("-show","-hold");
+        },
+        show:()=>{ // 필름 보이기
+            filmHandle.clear();
+            shortsFilmRef.current.classList.add("-show");
+            filmHandle.outTimer = setTimeout(filmHandle.clear,3000);
+        },
+        hold:()=>{ // 필름 고정(일시정지)
+            filmHandle.clear();
+            shortsFilmRef.current.classList.add("-hold");
+        },
+        hide:()=>{ // 필름 숨기기
+            filmHandle.clear();
+        },
+        get isShow(){
+            return ((cl)=> (cl.contains("-show") || cl.contains("-hold")) )(shortsFilmRef.current.classList);
+        }
+    };
 
-
-    const fn = {
+    const handle = {
         muted:(isMute:boolean) => {
             if(typeof isMute == "boolean"){
                 shortsVideo.current.muted( isMute );
@@ -100,28 +121,30 @@ export default forwardRef(function mpShortsVer2(props:{data:any[]},ref) {
         },
         pause:()=>{
             shortsVideo.current.pause();
-            filmFn.hide();
-            filmFn.hold();
+            filmHandle.hold();
         },
         play:()=>{
             shortsVideo.current.play();
-            filmFn.hide();
+            filmHandle.hide();
         }
-    }
+    };
+    useImperativeHandle(ref, () => (handle)); // 부모에게 핸들 전달
 
 
-    // Render Function
-    const filmToggle = (e) => {
-        e.stopPropagation();
-        filmFn.show();
-    };
-    const pause = (e) => {
-        e.stopPropagation();
-        fn.pause();
-    };
-    const play = (e) => {
-        e.stopPropagation();
-        fn.play();
+    // Event Listener Function
+    const onEvents = {
+        filmClick:(e) => {
+            e.stopPropagation();
+            filmHandle[filmHandle.isShow ? "hide" : "show"]();
+        },
+        pauseBtnClick:(e) => {
+            e.stopPropagation();
+            handle.pause();
+        },
+        playBtnClick:(e) => {
+            e.stopPropagation();
+            handle.play();
+        }
     };
 
     // Hooks
@@ -139,10 +162,10 @@ export default forwardRef(function mpShortsVer2(props:{data:any[]},ref) {
                 direction:"vertical",
                 on:{
                     afterInit:(swiper)=>{
-                        setShorts(swiper.realIndex);
+                        shortsFn.setShorts(swiper.realIndex);
                     },
                     slideChangeTransitionEnd(swiper) {
-                        setShorts(swiper.realIndex);
+                        shortsFn.setShorts(swiper.realIndex);
                     } 
                 }
             });
@@ -150,29 +173,27 @@ export default forwardRef(function mpShortsVer2(props:{data:any[]},ref) {
         
         // CleanUp
         return ()=>{
-            appendGreenRoom(shortsVideo);
-            appendGreenRoom(prevVideo);
-            appendGreenRoom(nextVideo);
+            shortsFn.appendGreenRoom(shortsVideo);
+            shortsFn.appendGreenRoom(prevVideo);
+            shortsFn.appendGreenRoom(nextVideo);
             swiper.current.destroy();
         };
     },[data,orientation]);
 
+    // 비디오 오브젝트 셋팅
     useEffect(()=>{
-        // 비디오 오브젝트 셋팅
-        shortsVideo.current = shortsVideo.current ?? createVideoJs("shorts-video");
-        prevVideo.current = prevVideo.current ?? createVideoJs("prev-video");
-        nextVideo.current = nextVideo.current ?? createVideoJs("next-video");
+        shortsVideo.current = shortsFn.createVideoJs("shorts-video");
+        prevVideo.current = shortsFn.createVideoJs("prev-video");
+        nextVideo.current = shortsFn.createVideoJs("next-video");
     },[]);
 
+    // 종휭 뷰 설정
     useEffect(() => {
         setOrientation(window.screen.orientation.type);
         const handleOrientationChange = () => setOrientation(window.screen.orientation.type);
         window.addEventListener('orientationchange', handleOrientationChange);
         return () => window.removeEventListener('orientationchange', handleOrientationChange);
     }, []);
-
-    // 부모에게 메소드 전달
-    useImperativeHandle(ref, () => ({muted:fn.muted}));
 
     return (<section className={`t-mpShorts`} id="sample">
         <div className="t-mpShorts__list swiper-container">
@@ -182,9 +203,9 @@ export default forwardRef(function mpShortsVer2(props:{data:any[]},ref) {
                 })}
             </div>
         </div>
-        <div ref={shortsFilmRef} className="t-mpShorts__film" onClick={filmToggle}>
-            <button className="pauseBtn" onClick={pause}>일시정지</button>
-            <button className="playBtn" onClick={play}>재생</button>
+        <div ref={shortsFilmRef} className="t-mpShorts__film" onClick={onEvents.filmClick}>
+            <button className="pauseBtn" onClick={onEvents.pauseBtnClick}>일시정지</button>
+            <button className="playBtn" onClick={onEvents.playBtnClick}>재생</button>
         </div>
         <div ref={greenRoomRef}></div>
     </section>);
