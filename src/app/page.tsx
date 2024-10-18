@@ -1,7 +1,7 @@
 "use client"; // mp === mabongpapa
 import { useRef, useEffect, useState, MutableRefObject } from "react";
 import "./page.scss";
-import T_mpShorts from "./components/template/mpShortsVer2";
+import T_mpShorts from "./components/template/mpShortsVer3";
 export default function MpShortsPage() {
     const [nowPage,setNowPage] = useState([]);
     // let soundText = "켜기";
@@ -22,7 +22,9 @@ export default function MpShortsPage() {
     };
 
     useEffect(()=>{
-        updateData();
+        setTimeout(()=>{
+            updateData();
+        },2000); // 임의로 2초 설정 함. (즉시 실행해도 됨)
     },[]);
 
     useEffect(()=>{
