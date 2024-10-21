@@ -24,7 +24,7 @@ export default function MpShortsPage() {
     useEffect(()=>{
         setTimeout(()=>{
             updateData();
-        },2000); // 임의로 2초 설정 함. (즉시 실행해도 됨)
+        },500); // 임의로 2초 설정 함. (즉시 실행해도 됨)
     },[]);
 
     useEffect(()=>{
