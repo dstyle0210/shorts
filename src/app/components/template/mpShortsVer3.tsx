@@ -45,11 +45,34 @@ export default forwardRef(function mpShortsVer3(props_:{data:T_Data},ref) {
 
     // Film Ref Function
     const filmFn = {
+        get isShow(){
+            return ((cl)=> (cl.contains("-show") || cl.contains("-hold")) )(filmRef.current.classList);
+        },
         appendSlide(slideIdx:number = activeSlideIdx.current){
             swiperFn.getSlide(slideIdx).append(filmRef.current);
         },
         appendGreenRoom(){
             greenRoomRef.current.append(filmRef.current);
+        },
+        outTimer:null,
+        clear(){
+            clearTimeout(filmFn.outTimer);
+            const classList = filmRef.current.classList;
+            classList.remove("-show","-hold");
+            return classList;
+        },
+        show(){
+            filmFn.clear().add("-show");
+            filmFn.outTimer = setTimeout(filmFn.clear,3000);
+        },
+        hold(){
+            filmFn.clear().add("-hold");
+        },
+        hide(){
+            filmFn.clear();
+        },
+        toggle(){
+            filmFn[(filmFn.isShow) ? "hide" : "show"]();
         }
     }
 
@@ -91,6 +114,10 @@ export default forwardRef(function mpShortsVer3(props_:{data:T_Data},ref) {
         playToShorts(){
             shortsVideo.current.play();
             console.log("play url : "+shortsVideo.current.cache_.sources[0].src);
+        },
+        pauseToShorts(){
+            shortsVideo.current.pause();
+            console.log("pause url : "+shortsVideo.current.cache_.sources[0].src);
         }
     }
 
@@ -124,8 +151,19 @@ export default forwardRef(function mpShortsVer3(props_:{data:T_Data},ref) {
 
     // Handle Function
     const handleFn = {
-        play(){
+        play(e){
+            e.stopPropagation();
             videojsFn.playToShorts();
+            filmFn.clear();
+        },
+        pause(e){
+            e.stopPropagation();
+            videojsFn.pauseToShorts();
+            filmFn.hold();
+        },
+        filmToggle(e){
+            e.stopPropagation();
+            filmFn.toggle();
         }
     }
 
@@ -153,10 +191,13 @@ export default forwardRef(function mpShortsVer3(props_:{data:T_Data},ref) {
             videojsFn.appendGreenRoom(prevVideo);
             videojsFn.appendGreenRoom(nextVideo);
             filmFn.appendGreenRoom();
-
         };
     },[data]);
     // init 
+
+    useEffect(()=>{
+
+    },[]);
 
     // Render
     if(data.length==0){
@@ -172,9 +213,9 @@ export default forwardRef(function mpShortsVer3(props_:{data:T_Data},ref) {
                     })}
                 </div>
             </div>
-            <div ref={filmRef} className="t-mpShorts__film">
-                <button className="pauseBtn">일시정지</button>
-                <button className="playBtn">재생</button>
+            <div ref={filmRef} className="t-mpShorts__film" onClick={handleFn.filmToggle}>
+                <button className="pauseBtn" onClick={handleFn.pause}>일시정지</button>
+                <button className="playBtn" onClick={handleFn.play}>재생</button>
             </div>
             <div ref={greenRoomRef} className="t-mpShorts__greenRoom"></div>
         </section>);
