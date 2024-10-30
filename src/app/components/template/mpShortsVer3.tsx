@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, forwardRef, useImperativeHandle, MutableRefObject} from "react";
+import { useState, useEffect, useMemo, useRef, forwardRef, useImperativeHandle, MutableRefObject, MouseEventHandler} from "react";
 import { setTimeout, clearTimeout } from "timers";
 import Swiper from 'swiper';
 import 'swiper/css';
@@ -118,6 +118,13 @@ export default forwardRef(function mpShortsVer3(props_:{data:T_Data},ref) {
         pauseToShorts(){
             shortsVideo.current.pause();
             console.log("pause url : "+shortsVideo.current.cache_.sources[0].src);
+        },
+        soundToggle(isMute:boolean){
+            if(typeof isMute == "boolean"){
+                shortsVideo.current.muted( isMute );
+            }else{
+                return shortsVideo.current.muted();
+            };
         }
     }
 
@@ -149,21 +156,46 @@ export default forwardRef(function mpShortsVer3(props_:{data:T_Data},ref) {
         }
     };
 
+
     // Handle Function
     const handleFn = {
-        play(e){
-            e.stopPropagation();
+        play(){
             videojsFn.playToShorts();
             filmFn.clear();
         },
-        pause(e){
-            e.stopPropagation();
+        pause(){
             videojsFn.pauseToShorts();
             filmFn.hold();
         },
-        filmToggle(e){
-            e.stopPropagation();
+        filmToggle(){
             filmFn.toggle();
+        },
+        get isMuted(){
+            return shortsVideo.current.muted();
+        },
+        muted(isMute:boolean){
+            shortsVideo.current.muted( isMute );
+        }
+    }
+    useImperativeHandle(ref, () => (handleFn)); // 부모에게 핸들 전달
+
+    // Handler Function
+    const handlerFn = {
+        play(e:React.MouseEvent<HTMLElement, MouseEvent>){
+            e.stopPropagation();
+            handleFn.play();
+        },
+        pause(e:React.MouseEvent<HTMLElement, MouseEvent>){
+            e.stopPropagation();
+            handleFn.pause();
+        },
+        filmToggle(e:React.MouseEvent<HTMLElement, MouseEvent>){
+            e.stopPropagation();
+            handleFn.filmToggle();
+        },
+        soundToggle(e:React.MouseEvent<HTMLElement, MouseEvent>){
+            e.stopPropagation();
+            handleFn.muted( !handleFn.isMuted );
         }
     }
 
@@ -213,9 +245,18 @@ export default forwardRef(function mpShortsVer3(props_:{data:T_Data},ref) {
                     })}
                 </div>
             </div>
-            <div ref={filmRef} className="t-mpShorts__film" onClick={handleFn.filmToggle}>
-                <button className="pauseBtn" onClick={handleFn.pause}>일시정지</button>
-                <button className="playBtn" onClick={handleFn.play}>재생</button>
+            <div ref={filmRef} className="t-mpShorts__film" onClick={handlerFn.filmToggle}>
+                <div className="m-mpShortsControl">
+                    <button className="pauseBtn" onClick={handlerFn.pause}>일시정지</button>
+                    <button className="playBtn" onClick={handlerFn.play}>재생</button>
+                </div>
+                <div className="m-mpShortsSeek">
+                    <button className="bar"></button>
+                    <span className="time"></span>
+                    <div className="poster">
+                        <span className="posterTime"></span>
+                    </div>
+                </div>
             </div>
             <div ref={greenRoomRef} className="t-mpShorts__greenRoom"></div>
         </section>);

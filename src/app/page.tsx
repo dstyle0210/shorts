@@ -16,7 +16,7 @@ export default function MpShortsPage() {
     };
 
     const muted = () => {
-        const isMuted = mpShortsRef.current.muted();
+        const isMuted = mpShortsRef.current.isMuted;
         mpShortsRef.current.muted( !isMuted );
         setSoundText(!isMuted ? "켜기" : "끄기");
     };

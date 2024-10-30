@@ -122,12 +122,11 @@ export default forwardRef(function mpShortsVer2(props_:{data:any[]},ref) {
     };
 
     const handle = {
+        get isMuted(){
+            return shortsVideo.current.muted();
+        },
         muted:(isMute:boolean) => {
-            if(typeof isMute == "boolean"){
-                shortsVideo.current.muted( isMute );
-            }else{
-                return shortsVideo.current.muted();
-            };
+            shortsVideo.current.muted( isMute );
         },
         pause:()=>{
             shortsVideo.current.pause();
