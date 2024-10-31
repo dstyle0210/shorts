@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, forwardRef, useImperativeHandle, MutableRefObject, MouseEventHandler} from "react";
+import { useState, useEffect, useMemo, useRef, forwardRef, useImperativeHandle, MutableRefObject, MouseEventHandler, useCallback} from "react";
 import { setTimeout, clearTimeout } from "timers";
 import Swiper from 'swiper';
 import 'swiper/css';
@@ -18,6 +18,16 @@ type T_Data = {thumb:string,sources:string[]}[]
 // 8. 데이터 로딩 구현
 // 9. 데이터 인덱스로 구현 (?idx=4) 같은 식
 
+const useTest = () => {
+    const [element,setElement] = useState(null);
+    const ref = useCallback((node:HTMLProgressElement)=>{
+        if(node!==null){
+            setElement(node);
+        }
+    },[]);
+    return [element,ref];
+}
+
 export default forwardRef(function mpShortsVer3(props_:{data:T_Data},ref) {
     // props
     const props = {
@@ -36,6 +46,10 @@ export default forwardRef(function mpShortsVer3(props_:{data:T_Data},ref) {
     const nextVideo = useRef<Player>();
     const greenRoomRef = useRef<HTMLDivElement>(null); // 비디오가 들어가는 대기실
     const filmRef = useRef<HTMLDivElement>(null); // 숏츠 위 필름(일시정지, 프로그래스 등, 기능버튼 들어가는 부분)
+    const timelineRef = useRef<HTMLProgressElement>(null); // 비디오 진행률
+    const timeRef = useRef<HTMLSpanElement>(null); // 비디오 재생시간
+    const dueRef = useRef<HTMLSpanElement>(null); // 비디오 총시간
+    
 
     // data Function
     const dataFn = {
@@ -76,11 +90,38 @@ export default forwardRef(function mpShortsVer3(props_:{data:T_Data},ref) {
         }
     }
 
+    const util = {
+        timeText(sec_:number){
+            if(sec_<0) return "00:00";
+            const stamp = (num:number) => (num<10 ? "0"+num : ""+num);
+            const cur = Math.floor(sec_);
+            const min = stamp(Math.floor(cur/60));
+            const sec = stamp(Math.floor(cur%60));
+            return min+":"+sec;
+        }
+    }
+
     // Videojs Ref Function
     const videojsFn = {
         insertVideoElement(videoId:string){
             greenRoomRef.current.insertAdjacentHTML("beforeend",`<video id=${videoId} class="video-js" preload="auto" playsinline></video>`);
             return videoId;
+        },
+        shortsAddMethod(videoObj){
+            videoObj.on("timeupdate",()=>{
+                const due = shortsVideo.current.duration(); // 비디오 정보가 들어오지 않았다면, due는 NaN으로 나온다.
+                if(Number.isNaN(due)) return;
+                timelineRef.current.max = due;
+                dueRef.current.innerText = util.timeText(due);
+
+                const time = shortsVideo.current.currentTime();
+                timeRef.current.innerText = util.timeText(time);
+                timelineRef.current.value = time;
+            });
+            videoObj.on("ended",()=>{
+                shortsVideo.current.currentTime(0);
+                shortsVideo.current.play();
+            });
         },
         create(videoId_:string,videoJsOption_?:{width?:number,height?:number}):Player|null{
             const videoId = videojsFn.insertVideoElement(videoId_); // videojs를 만들어낼 엘리먼트 대기실에 생성
@@ -90,9 +131,15 @@ export default forwardRef(function mpShortsVer3(props_:{data:T_Data},ref) {
                 height:window.outerHeight,
                 ...videoJsOption_
             };
-            return videojs(videoId,videoJsOption,function(){
+
+            const videoObj = videojs(videoId,videoJsOption,function(){
                 this.muted(true);
             });
+
+            // 숏츠비디오라면, 이벤트 추가.
+            if(videoId=="shorts-video") videojsFn.shortsAddMethod(videoObj);
+
+            return videoObj;
         },
         setSrc(videoRef:T_Video , dataIdx:number){
             return videoRef.current.src( dataFn.getVideoSrc(dataIdx) );
@@ -199,6 +246,12 @@ export default forwardRef(function mpShortsVer3(props_:{data:T_Data},ref) {
         }
     }
 
+    const seekFn = {
+        init:()=>{
+            
+        }
+    }
+
     // Hooks
     useEffect(()=>{
         if(data.length==0) return;
@@ -206,8 +259,8 @@ export default forwardRef(function mpShortsVer3(props_:{data:T_Data},ref) {
         shortsVideo.current = shortsVideo.current ?? videojsFn.create("shorts-video");
         prevVideo.current = prevVideo.current ?? videojsFn.create("prev-video");
         nextVideo.current = nextVideo.current ?? videojsFn.create("next-video");
-
         swiper.current = swiperFn.create();
+
         videojsFn.appendSlide(shortsVideo,activeSlideIdx.current);
         videojsFn.appendSlide(prevVideo,activeSlideIdx.current - 1);
         videojsFn.appendSlide(nextVideo,activeSlideIdx.current + 1);
@@ -216,7 +269,7 @@ export default forwardRef(function mpShortsVer3(props_:{data:T_Data},ref) {
             videojsFn.setSrc(shortsVideo,activeSlideIdx.current);
         };
         videojsFn.playToShorts();
-
+        
         return () => {
             swiperFn.destroy();
             videojsFn.appendGreenRoom(shortsVideo);
@@ -225,11 +278,20 @@ export default forwardRef(function mpShortsVer3(props_:{data:T_Data},ref) {
             filmFn.appendGreenRoom();
         };
     },[data]);
+
     // init 
-
-    useEffect(()=>{
-
-    },[]);
+    const a0 = () => {
+        console.log("touch");
+    }
+    const a1 = () => {
+        console.log("touchstart");
+    }
+    const a2 = () => {
+        console.log("touchend");
+    }
+    const a3 = () => {
+        console.log("touchmove");
+    }
 
     // Render
     if(data.length==0){
@@ -250,9 +312,10 @@ export default forwardRef(function mpShortsVer3(props_:{data:T_Data},ref) {
                     <button className="pauseBtn" onClick={handlerFn.pause}>일시정지</button>
                     <button className="playBtn" onClick={handlerFn.play}>재생</button>
                 </div>
-                <div className="m-mpShortsSeek">
-                    <button className="bar"></button>
-                    <span className="time"></span>
+                <div className="m-mpShortsTimeline">
+                    <progress ref={timelineRef} onClick={a0} onTouchStart={a1} onTouchEnd={a2} className="timeline"></progress>
+                    <span ref={timeRef} className="time"></span>
+                    <span ref={dueRef} className="due"></span>
                     <div className="poster">
                         <span className="posterTime"></span>
                     </div>
@@ -262,3 +325,4 @@ export default forwardRef(function mpShortsVer3(props_:{data:T_Data},ref) {
         </section>);
     };
 });
+
