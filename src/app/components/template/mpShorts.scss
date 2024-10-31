@@ -8,8 +8,12 @@
         .m-mpShortsTimeline{display:flex;}
     }
     .m-mpShortsTimeline{display:none;}
-    &.-show .m-mpShortsControl .pauseBtn{display:inline-block;}
-    &.-hold .m-mpShortsControl .playBtn{display:inline-block;}
+    &.-show{
+        .m-mpShortsControl .pauseBtn{display:inline-block;}
+    }
+    &.-hold{
+        .m-mpShortsControl .playBtn{display:inline-block;}
+    }
 }
 .m-mpShortsControl{
     width:100%;height:100%;

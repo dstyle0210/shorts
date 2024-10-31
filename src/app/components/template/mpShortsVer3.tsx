@@ -72,7 +72,7 @@ export default forwardRef(function mpShortsVer3(props_:{data:T_Data},ref) {
         clear(){
             clearTimeout(filmFn.outTimer);
             const classList = filmRef.current.classList;
-            classList.remove("-show","-hold");
+            classList.remove("-show","-hold","-seek");
             return classList;
         },
         show(){
@@ -84,6 +84,9 @@ export default forwardRef(function mpShortsVer3(props_:{data:T_Data},ref) {
         },
         hide(){
             filmFn.clear();
+        },
+        seek(){
+            filmFn.clear().add("-seek");
         },
         toggle(){
             filmFn[(filmFn.isShow) ? "hide" : "show"]();
@@ -247,8 +250,26 @@ export default forwardRef(function mpShortsVer3(props_:{data:T_Data},ref) {
     }
 
     const seekFn = {
-        init:()=>{
-            
+        seekType:"",
+        click(e){
+            e.stopPropagation();
+            console.log("click");
+        },
+        touchStart(e){
+            e.stopPropagation();
+            seekFn.seekType = "touchStart";
+            console.log("touchStart");
+        },
+        touchMove(e){
+            e.stopPropagation();
+            seekFn.seekType = "touchMove";
+            console.log("touchMove");
+        },
+        touchEnd(e){
+            e.stopPropagation();
+            console.log(seekFn.seekType);
+            seekFn.seekType = "touchEnd";
+            console.log("touchEnd");
         }
     }
 
@@ -279,20 +300,6 @@ export default forwardRef(function mpShortsVer3(props_:{data:T_Data},ref) {
         };
     },[data]);
 
-    // init 
-    const a0 = () => {
-        console.log("touch");
-    }
-    const a1 = () => {
-        console.log("touchstart");
-    }
-    const a2 = () => {
-        console.log("touchend");
-    }
-    const a3 = () => {
-        console.log("touchmove");
-    }
-
     // Render
     if(data.length==0){
         return (<section className={`t-mpShorts`} id="sample">
@@ -313,7 +320,7 @@ export default forwardRef(function mpShortsVer3(props_:{data:T_Data},ref) {
                     <button className="playBtn" onClick={handlerFn.play}>재생</button>
                 </div>
                 <div className="m-mpShortsTimeline">
-                    <progress ref={timelineRef} onClick={a0} onTouchStart={a1} onTouchEnd={a2} className="timeline"></progress>
+                    <progress ref={timelineRef} onClick={seekFn.click} onTouchStart={seekFn.touchStart} onTouchMove={seekFn.touchMove} onTouchEnd={seekFn.touchEnd} className="timeline"></progress>
                     <span ref={timeRef} className="time"></span>
                     <span ref={dueRef} className="due"></span>
                     <div className="poster">
