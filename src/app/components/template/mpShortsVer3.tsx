@@ -17,17 +17,6 @@ type T_Data = {thumb:string,sources:string[]}[]
 // 7. 일시 정지인 상황에서 스와이핑 되면 안됨.
 // 8. 데이터 로딩 구현
 // 9. 데이터 인덱스로 구현 (?idx=4) 같은 식
-
-const useTest = () => {
-    const [element,setElement] = useState(null);
-    const ref = useCallback((node:HTMLProgressElement)=>{
-        if(node!==null){
-            setElement(node);
-        }
-    },[]);
-    return [element,ref];
-}
-
 export default forwardRef(function mpShortsVer3(props_:{data:T_Data},ref) {
     // props
     const props = {

@@ -1,7 +1,7 @@
 "use client"; // mp === mabongpapa
 import { useRef, useEffect, useState, MutableRefObject } from "react";
 import "./page.scss";
-import T_mpShorts from "./components/template/mpShortsVer3";
+import T_mpShorts from "./components/template/mpShortsVer4";
 export default function MpShortsPage() {
     const [nowPage,setNowPage] = useState([]);
     // let soundText = "켜기";
