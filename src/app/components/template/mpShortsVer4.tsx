@@ -1,15 +1,15 @@
-import { useState, useEffect, useMemo, useRef, forwardRef, useImperativeHandle, MutableRefObject, MouseEventHandler, useCallback} from "react";
+import { useState, useEffect, useMemo, useRef,useContext, forwardRef, useImperativeHandle, MutableRefObject, MouseEventHandler, useCallback} from "react";
 import { setTimeout, clearTimeout } from "timers";
-import Swiper from 'swiper';
-import 'swiper/css';
 import videojs from "video.js";
 import type Player from 'video.js/dist/types/player';
 import 'video.js/dist/video-js.css';
 import "./mpShorts.scss";
 import useElement from "../../hooks/useElement";
+import O_mpShortsSwiper from "../organisms/mpShortsSwiper";
+
 
 type T_Video = MutableRefObject<Player>;
-type T_Data = {thumb:string,sources:string[]}[]
+type T_Data = T_videos;
 
 // 아래 부터는 ver3 로 이관
 // 5. seek 기능 생성 + seek 비디오 생성(진행율 확인용)
@@ -19,33 +19,12 @@ type T_Data = {thumb:string,sources:string[]}[]
 // 8. 데이터 로딩 구현
 // 9. 데이터 인덱스로 구현 (?idx=4) 같은 식
 
-export default forwardRef(function mpShortsVer4(props_:{data:T_Data},ref) {
-    console.log("----- init -----");
-    // props
-    const props = {
-        data:[],
-        initIdx:0,
-        orientation:"portrait-primary",
-        ...props_
-    };
-
-    const data = props.data;
-    const [root,rootRef] = useElement<HTMLElement>();
-    const [type,setType] = useState(100);
-
-    useEffect(()=>{
-        if(!root) return;
-        console.log(root);
-    },[root]);
-
-    useEffect(()=>{
-        if(!data.length) return;
-        console.log(data);
-    },[data]);
-
-
+export default forwardRef(function mpShortsVer4({},ref) {
+    console.log("--mpShortsVer4--");
+    const [root,rootRef] = useElement<HTMLDivElement>();
+    console.log(root);
     return (<section ref={rootRef}>
-        1231213
+        <O_mpShortsSwiper></O_mpShortsSwiper>
     </section>);
 });
 
