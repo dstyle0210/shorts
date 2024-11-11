@@ -1,8 +1,5 @@
 import { useState, useEffect, useMemo, useRef,useContext, forwardRef, useImperativeHandle, MutableRefObject, MouseEventHandler, useCallback} from "react";
 import { setTimeout, clearTimeout } from "timers";
-import videojs from "video.js";
-import type Player from 'video.js/dist/types/player';
-import 'video.js/dist/video-js.css';
 import "./mpShorts.scss";
 import { ShortsContext } from "../../contexts/shortsContext";
 import useElement from "../../hooks/useElement";

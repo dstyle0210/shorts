@@ -1,8 +1,7 @@
 import { useRef,useEffect, useImperativeHandle, forwardRef} from "react";
 import type Player from 'video.js/dist/types/player';
 import videojs from "video.js";
-
-import { ShortsContext } from "@/app/contexts/shortsContext";
+import 'video.js/dist/video-js.css';
 import useElement from "../../hooks/useElement";
 
 export default forwardRef(function ShortsVideo(props_:{source:string,isAutoplay:boolean},ref){
@@ -29,7 +28,7 @@ export default forwardRef(function ShortsVideo(props_:{source:string,isAutoplay:
             video.current.play();
         },
         src(source_:string){
-            video.current.src(source_)
+            video.current.src(source_);
         },
         pause(source_:string){
             video.current.pause();
@@ -38,14 +37,12 @@ export default forwardRef(function ShortsVideo(props_:{source:string,isAutoplay:
 
     // useEffect
     useEffect(()=>{
-        console.log(videoEl , source);
         if(!videoEl || !source) return;
         const videoOptions = {
             width:window.outerWidth,
             height:window.outerHeight,
             ...props
         };
-        console.log(videoOptions);
         video.current = videojs(videoEl,videoOptions,function(){
             this.muted(true);
         });
@@ -55,5 +52,5 @@ export default forwardRef(function ShortsVideo(props_:{source:string,isAutoplay:
         };
     },[videoEl,source])
 
-    return (<video ref={videoRef}></video>);
+    return (<video className="video-js" ref={videoRef}></video>);
 });
