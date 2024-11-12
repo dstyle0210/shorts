@@ -4,6 +4,13 @@ import videojs from "video.js";
 import 'video.js/dist/video-js.css';
 import useElement from "../../hooks/useElement";
 
+export interface ShortsVideoRef {
+    video:Player,
+    el:()=>Element,
+    play:()=>void,
+    src:(source_:string)=>void,
+    pause:()=>void
+};
 export default forwardRef(function ShortsVideo(props_:{source:string,isAutoplay:boolean},ref){
     // props
     const props = {
@@ -30,7 +37,10 @@ export default forwardRef(function ShortsVideo(props_:{source:string,isAutoplay:
         src(source_:string){
             video.current.src(source_);
         },
-        pause(source_:string){
+        poster(thumb_:string){
+            video.current.poster(thumb_);
+        },
+        pause(){
             video.current.pause();
         }
     })); // 부모에게 핸들 전달

@@ -5,10 +5,12 @@ import 'swiper/css';
 import { ShortsContext } from "@/app/contexts/shortsContext";
 import useElement from "../../hooks/useElement";
 import M_ShortsVideo from "../molecules/ShortsVideo";
+import type {ShortsVideoRef} from "../molecules/ShortsVideo";
+
 
 export default forwardRef(function mpShortsSwiper(props_,ref) {
     // props
-    const props = {
+    const Props = {
         data:null,
         initIdx:0,
         orientation:"portrait-primary",
@@ -16,27 +18,44 @@ export default forwardRef(function mpShortsSwiper(props_,ref) {
     };
 
     // computed
-    const data = props.data ? props.data : useContext(ShortsContext);
+    const data = Props.data ? Props.data : useContext(ShortsContext);
     const [root,rootRef] = useElement<HTMLDivElement>();
     const [greenRoomEl,greenRoomRef] = useElement<HTMLDivElement>();
-    const shortsVideoRef = useRef<Player>(null); // 현재 비디오
-    const prevVideoRef = useRef<Player>(null); // 이전 비디오
-    const nextVideoRef = useRef<Player>(null); // 다음 비디오
+    const shortsVideoRef = useRef<ShortsVideoRef>(null); // 현재 비디오
+    const prevVideoRef = useRef<ShortsVideoRef>(null); // 이전 비디오
+    const nextVideoRef = useRef<ShortsVideoRef>(null); // 다음 비디오
 
     const swiperObj = useRef<Swiper>();
-    const swiperIdx = useRef(props.initIdx);
+    const swiperIdx = useRef(Props.initIdx);
 
     const fn = {
-        setSlide({idx,videoRef,swiper}:{idx:number,videoRef:MutableRefObject<Player>,swiper:Swiper}){
-            const slide = (swiper ?? swiperObj.current).slides[idx];
-            slide.append( videoRef.current.el );
+        setProps:(defaultProp,paramProp) => { return {...defaultProp,...paramProp}; },
+        setSlide(slideProps_:{idx:number,videoRef:MutableRefObject<ShortsVideoRef>,swiper?:Swiper,isAutoplay?:boolean}){
+            const {idx,videoRef,swiper,isAutoplay} = fn.setProps({
+                swiper:swiperObj.current,
+                isAutoplay:false
+            },slideProps_);
+
+            const source = data[idx]?.sources[0];
+            const poster = data[idx]?.thumb;
+            const slide = swiper.slides[idx];
+            const isContinue = !!source && !!slide;
+
+            if(isContinue){
+                slide.append( videoRef.current.video.el_ );
+                videoRef.current.src(source);
+                videoRef.current.poster(poster);
+                if(isAutoplay) videoRef.current.play();
+            }else{
+                greenRoomEl.append( videoRef.current.video.el_ );
+            };
         },
         currentSlide(swiper?:Swiper){
-            fn.setSlide({
-                idx:swiperIdx.current,
-                videoRef:shortsVideoRef,
-                swiper:(swiper ?? swiperObj.current)
-            })
+            fn.setSlide({idx:swiperIdx.current,videoRef:shortsVideoRef,swiper,isAutoplay:true});
+        },
+        prevNextSlide(swiper?:Swiper){
+            fn.setSlide({idx:swiperIdx.current+1,videoRef:nextVideoRef,swiper});
+            fn.setSlide({idx:swiperIdx.current-1,videoRef:prevVideoRef,swiper});
         }
     }
 
@@ -47,14 +66,15 @@ export default forwardRef(function mpShortsSwiper(props_,ref) {
             direction:"vertical",
             on:{
                 afterInit(swiper) {
-                    const target = swiper.slides[swiperIdx.current];
-                    target.append( shortsVideoRef.current.el );
+                    fn.currentSlide(swiper);
+                    fn.prevNextSlide(swiper);
                 }
             }
         });
         swiperObj.current.on("slideChangeTransitionEnd",(swiper)=>{
             swiperIdx.current = swiper.realIndex;
-
+            fn.currentSlide(swiper);
+            fn.prevNextSlide(swiper);
         });
         return () => {
             swiperObj.current.destroy();
