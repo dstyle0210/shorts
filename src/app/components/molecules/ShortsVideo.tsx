@@ -4,24 +4,33 @@ import videojs from "video.js";
 import 'video.js/dist/video-js.css';
 import useElement from "../../hooks/useElement";
 
-export interface ShortsVideoRef {
-    video:Player,
-    el:()=>Element,
-    play:()=>void,
-    src:(source_:string)=>void,
-    pause:()=>void
+export type I_ShortsVideoProps = {
+    source?:string,
+    poster?:string,
+    isAutoplay?:boolean
 };
-export default forwardRef(function ShortsVideo(props_:{source:string,isAutoplay:boolean},ref){
+
+export interface I_ShortsVideoRef {
+    readonly video:Player,
+    readonly el:Element,
+    play():void,
+    src(source_:string):void,
+    poster(poster_:string):void,
+    pause():void
+};
+
+export default forwardRef(function(props_:I_ShortsVideoProps,ref){
     // props
     const props = {
         source:"",
+        poster:"",
         isAutoplay:false,
         ...props_
     };
 
     // computed
+    const {source,poster,isAutoplay} = props;
     const [videoEl,videoRef] = useElement<HTMLVideoElement>();
-    const {source,isAutoplay} = props;
     const video = useRef<Player>();
 
     useImperativeHandle(ref, () => ({
@@ -47,7 +56,7 @@ export default forwardRef(function ShortsVideo(props_:{source:string,isAutoplay:
 
     // useEffect
     useEffect(()=>{
-        if(!videoEl || !source) return;
+        if(!videoEl) return;
         const videoOptions = {
             width:window.outerWidth,
             height:window.outerHeight,
@@ -56,10 +65,11 @@ export default forwardRef(function ShortsVideo(props_:{source:string,isAutoplay:
         video.current = videojs(videoEl,videoOptions,function(){
             this.muted(true);
         });
-        video.current.src(props.source);
-        if(isAutoplay){
-            video.current.play();
-        };
+
+        if(source) video.current.src(props.source);
+        if(poster) video.current.src(props.poster);
+        if(isAutoplay) video.current.play();
+
     },[videoEl,source])
 
     return (<video className="video-js" ref={videoRef}></video>);
