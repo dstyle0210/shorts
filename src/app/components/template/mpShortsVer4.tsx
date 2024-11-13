@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef,useContext, forwardRef, useImperativeHandle, MutableRefObject, MouseEventHandler, useCallback} from "react";
-import { setTimeout, clearTimeout } from "timers";
+import type Player from 'video.js/dist/types/player';
 import "./mpShorts.scss";
 import { ShortsContext } from "../../contexts/shortsContext";
 import useElement from "../../hooks/useElement";
@@ -28,7 +28,7 @@ export default function mpShortsVer4(props_:mpShortsVer4Props) {
 
     // computed
     const [data,setData] = useState(props.data);
-    const [shortsVideo,setShortsVideo] = useState(null);
+    const [shortsVideo,setShortsVideo] = useState<Player>(null);
     const [root,rootRef] = useElement<HTMLDivElement>();
 
     useEffect(()=>{

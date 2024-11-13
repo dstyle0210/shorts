@@ -111,15 +111,7 @@ export default forwardRef(function mpShortsSwiper(props_,ref) {
                 <M_ShortsVideo ref={shortsVideoRef} source={data.length ? data[0].sources[0] : ""} isAutoplay={true} ></M_ShortsVideo>
                 <M_ShortsVideo ref={prevVideoRef} isAutoplay={false} ></M_ShortsVideo>
                 <M_ShortsVideo ref={nextVideoRef} isAutoplay={false} ></M_ShortsVideo>
-                <M_mpShortsFilm 
-                    ref={filmRef}
-                    video={shortsVideoRef.current?.video}
-                    onPause={handle.pause}
-                    onPlay={handle.play}
-                ></M_mpShortsFilm>
-            </div>
-            <div style={{"position":"fixed","bottom":"0","left":"0","zIndex":"10000"}}>
-                <button onClick={handle.pause}>멈춤</button>
+                <M_mpShortsFilm ref={filmRef} onPause={handle.pause} onPlay={handle.play}></M_mpShortsFilm>
             </div>
         </div>
     );

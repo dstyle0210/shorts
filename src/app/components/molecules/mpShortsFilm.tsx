@@ -1,12 +1,9 @@
-import {useEffect, forwardRef, useImperativeHandle, useContext} from "react";
+import {forwardRef, useImperativeHandle} from "react";
 import useElement from "../../hooks/useElement";
-import type Player from 'video.js/dist/types/player';
 import "./mpShortsFilm.scss";
 import M_timeline  from "../molecules/timeline";
-import { ShortsContext } from "../../contexts/shortsContext";
 
 export type T_mpShortsFilmProps = {
-    video?:Player,
     onPause():void,
     onPlay():void
 }
@@ -19,7 +16,6 @@ export default forwardRef(function mpShortsFilm(props_:T_mpShortsFilmProps,ref){
     const [filmEl,filmRef] = useElement<HTMLDivElement>();
     const [timelineEl,timelineRef] = useElement<HTMLProgressElement>();
     const {onPause,onPlay} = props_;
-    const shortsContext = useContext(ShortsContext);
 
     const fn = {
         get isShow(){
@@ -79,14 +75,6 @@ export default forwardRef(function mpShortsFilm(props_:T_mpShortsFilmProps,ref){
             return filmEl;
         }
     }));
-
-    useEffect(()=>{
-        if(!shortsContext.shortsVideo) return;
-        shortsContext.shortsVideo.on("timeupdate",()=>{
-            const t = shortsContext.shortsVideo.currentTime(); // 재생시간
-            console.log(t);
-        })
-    },[shortsContext.shortsVideo])
 
     return (<div ref={filmRef} className="t-mpShorts__film" onClick={handler.toggle}>
                 <div className="m-mpShortsControl">
