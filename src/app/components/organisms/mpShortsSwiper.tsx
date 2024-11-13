@@ -1,14 +1,10 @@
 import { useRef,useEffect, useContext, forwardRef,MutableRefObject} from "react";
-import type Player from 'video.js/dist/types/player';
 import Swiper from 'swiper';
 import 'swiper/css';
 import { ShortsContext } from "@/app/contexts/shortsContext";
 import useElement from "../../hooks/useElement";
-import M_ShortsVideo from "../molecules/ShortsVideo";
-import type {I_ShortsVideoRef} from "../molecules/ShortsVideo";
-import M_mpShortsFilm from "../molecules/mpShortsFilm";
-
-
+import M_ShortsVideo , {I_ShortsVideoRef} from "../molecules/ShortsVideo";
+import M_mpShortsFilm , {I_mpShortsFilmRef} from "../molecules/mpShortsFilm";
 
 export default forwardRef(function mpShortsSwiper(props_,ref) {
     // props
@@ -20,13 +16,14 @@ export default forwardRef(function mpShortsSwiper(props_,ref) {
     };
 
     // computed
-    const data = Props.data ? Props.data : useContext(ShortsContext);
+    const shortsContext = useContext(ShortsContext);
+    const data = Props.data ? Props.data : shortsContext.data;
     const [root,rootRef] = useElement<HTMLElement>();
     const [greenRoomEl,greenRoomRef] = useElement<HTMLElement>();
     const shortsVideoRef = useRef<I_ShortsVideoRef>(null); // 현재 비디오
     const prevVideoRef = useRef<I_ShortsVideoRef>(null); // 이전 비디오
     const nextVideoRef = useRef<I_ShortsVideoRef>(null); // 다음 비디오
-    const filmRef = useRef<I_ShortsVideoRef>(null); // 필름
+    const filmRef = useRef<I_mpShortsFilmRef>(null); // 필름
 
     const swiperObj = useRef<Swiper>();
     const swiperIdx = useRef(Props.initIdx);
@@ -93,6 +90,11 @@ export default forwardRef(function mpShortsSwiper(props_,ref) {
 
         fn.currentSlide(swiperObj.current);
         fn.prevNextSlide(swiperObj.current);
+
+        if( shortsVideoRef.current ) {
+            shortsContext.setShortsVideo(shortsVideoRef.current.video);
+        };
+
         return () => {
             swiperObj.current.destroy();
         };
@@ -111,6 +113,7 @@ export default forwardRef(function mpShortsSwiper(props_,ref) {
                 <M_ShortsVideo ref={nextVideoRef} isAutoplay={false} ></M_ShortsVideo>
                 <M_mpShortsFilm 
                     ref={filmRef}
+                    video={shortsVideoRef.current?.video}
                     onPause={handle.pause}
                     onPlay={handle.play}
                 ></M_mpShortsFilm>

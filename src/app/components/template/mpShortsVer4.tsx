@@ -27,11 +27,15 @@ export default function mpShortsVer4(props_:mpShortsVer4Props) {
     };
 
     // computed
+    const [data,setData] = useState(props.data);
+    const [shortsVideo,setShortsVideo] = useState(null);
     const [root,rootRef] = useElement<HTMLDivElement>();
-    const data = props.data;
 
+    useEffect(()=>{
+        setData(props.data);
+    },[props.data]);
     return (
-        <ShortsContext.Provider value={data}>
+        <ShortsContext.Provider value={{data,setData,shortsVideo,setShortsVideo}}>
         <section ref={rootRef} className="t-mpShorts">
             <O_mpShortsSwiper></O_mpShortsSwiper>
         </section>
