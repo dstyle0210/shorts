@@ -2,38 +2,17 @@ import {useRef, useEffect, forwardRef, useContext, useImperativeHandle} from "re
 import useElement from "../../hooks/useElement";
 import { ShortsContext } from "../../contexts/shortsContext";
 
-export type T_timelineProps = {};
+export type T_timelineProps = {
+    onSeekStart():void,
+    onSeekEnd():void,
+};
 
 export default forwardRef(function(props_:T_timelineProps,ref){
+    const {onSeekStart,onSeekEnd} = props_;
     const [progessEl,progessRef] = useElement<HTMLProgressElement>();
     const [timeEl,timeRef] = useElement<HTMLSpanElement>();
     const [dueEl,dueRef] = useElement<HTMLSpanElement>();
     const shortsContext = useContext(ShortsContext);
-
-    
-    const handler = {
-        click(){
-
-        },
-        touchStart(e){
-            e.stopPropagation();
-            const duration = shortsContext.shortsVideo.duration(); // 영상의 전체 시간
-            const timelineEl = e.nativeEvent.srcElement; // progessEl과 사실은 같음.
-            const rect = timelineEl.getBoundingClientRect();
-            const touchX = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
-            const maxX = rect.width;
-            const per = (touchX/maxX); // 진행률
-            const seek = per * duration; // 터치 시작된 포인트의 시간
-
-            console.log( per , seek );
-        },
-        touchMove(){
-
-        },
-        touchEnd(){
-
-        }
-    };
 
     const fn = {
         timeText(sec_:number){
@@ -43,6 +22,58 @@ export default forwardRef(function(props_:T_timelineProps,ref){
             const min = stamp(Math.floor(cur/60));
             const sec = stamp(Math.floor(cur%60));
             return min+":"+sec;
+        },
+        getSeek(e:React.TouchEvent<HTMLProgressElement>){
+            if (e.target instanceof Element) {
+                const duration = shortsContext.shortsVideo.duration();
+                const timelineEl = e.target;
+                const rect = timelineEl.getBoundingClientRect();
+                const touchX = e.touches[0].clientX - rect.left;
+                const maxX = rect.width;
+                const per = (touchX/maxX); // 진행률
+                return per * duration;
+            };
+        }
+    };
+
+    const handle = {
+        seek:0,
+        paused:false,
+        get duration(){
+            return shortsContext.shortsVideo.duration();
+        },
+        seekStart(seek_:number){
+            handle.paused = shortsContext.shortsVideo.paused(); // 일시정지인지 확인
+            handle.seek = seek_;
+            onSeekStart(); // seek 가 돌면, 일시정지가 됨.
+        },
+        seekMove(seek_:number){
+            progessEl.value = handle.seek;
+        },
+        seekEnd(){
+            shortsContext.shortsVideo.currentTime(handle.seek);
+            if(!handle.paused) shortsContext.shortsVideo.play();
+            progessEl.value = handle.seek;
+            onSeekEnd();
+        }
+    }
+
+    const handler = {
+        click(){
+
+        },
+        // React.MouseEvent<HTMLElement, MouseEvent>
+        touchStart(e:React.TouchEvent<HTMLProgressElement>){
+            e.stopPropagation();
+            handle.seekStart( fn.getSeek(e) );
+        },
+        touchMove(e:React.TouchEvent<HTMLProgressElement>){
+            e.stopPropagation();
+            handle.seekMove( fn.getSeek(e) );
+        },
+        touchEnd(e:React.TouchEvent<HTMLProgressElement>){
+            e.stopPropagation();
+            handle.seekEnd();
         }
     };
     

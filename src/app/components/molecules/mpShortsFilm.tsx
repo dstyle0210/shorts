@@ -45,28 +45,55 @@ export default forwardRef(function mpShortsFilm(props_:T_mpShortsFilmProps,ref){
         hold(){
             fn.clear().add("-hold");
         },
+        seek(){
+            fn.clear().add("-seek");
+        },
         toggle(){
             fn[(fn.isShow) ? "hide" : "show"]();
         }
     };
 
-    // 엘리먼트에 연결되는 핸들러
-    const handler = {
-        toggle(e:React.MouseEvent<HTMLElement, MouseEvent>){
-            e.stopPropagation();
-            fn.toggle();
-        },
-        pause(e:React.MouseEvent<HTMLElement, MouseEvent>){
-            e.stopPropagation();
+
+
+    // 핸들
+    const handle = {
+        toggle:fn.toggle,
+        hide:fn.hide,
+        pause(){
             onPause();
             fn.videoState = "pause";
             fn.hold();
         },
-        play(e:React.MouseEvent<HTMLElement, MouseEvent>){
-            e.stopPropagation();
+        play(){
             onPlay();
             fn.videoState = "play";
             fn.setClearTimer(1000);
+        },
+        seek(){
+            onPause();
+            fn.seek();
+        }
+    }
+
+    // 엘리먼트에 연결되는 핸들러
+    const handler = {
+        toggle(e:React.MouseEvent<HTMLElement, MouseEvent>){
+            e.stopPropagation();
+            handle.toggle();
+        },
+        pause(e:React.MouseEvent<HTMLElement, MouseEvent>){
+            e.stopPropagation();
+            handle.pause();
+        },
+        play(e:React.MouseEvent<HTMLElement, MouseEvent>){
+            e.stopPropagation();
+            handle.play();
+        },
+        seekStart(){
+            handle.seek();
+        },
+        seekEnd(){
+            handle.hide();
         }
     };
 
@@ -81,6 +108,6 @@ export default forwardRef(function mpShortsFilm(props_:T_mpShortsFilmProps,ref){
                     <button className="pauseBtn" onClick={handler.pause}>일시정지</button>
                     <button className="playBtn" onClick={handler.play}>재생</button>
                 </div>
-                <M_timeline></M_timeline>
+                <M_timeline onSeekStart={handler.seekStart} onSeekEnd={handler.seekEnd}></M_timeline>
             </div>);
 });

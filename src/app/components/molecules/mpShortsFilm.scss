@@ -1,5 +1,5 @@
 .t-mpShorts__film{position:absolute;top:0;left:0;right:0;bottom:0;z-index:1000;background:rgba(244,67,54,0.2);
-    &.-show,&.-hold{background:rgba(255,255,255,.5);
+    &.-seek,&.-show,&.-hold{background:rgba(255,255,255,.5);
         .m-mpShortsTimeline{display:flex;}
     }
     .m-mpShortsTimeline{display:none;}
