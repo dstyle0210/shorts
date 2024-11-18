@@ -1,5 +1,7 @@
 import {useRef, useEffect, forwardRef, useContext, useImperativeHandle} from "react";
 import useElement from "../../hooks/useElement";
+import "./timeline.scss";
+import M_ShortsVideo , {I_ShortsVideoRef} from "../molecules/ShortsVideo";
 import { ShortsContext } from "../../contexts/shortsContext";
 
 export type T_timelineProps = {
@@ -12,8 +14,10 @@ export default forwardRef(function(props_:T_timelineProps,ref){
     const [progessEl,progessRef] = useElement<HTMLProgressElement>();
     const [timeEl,timeRef] = useElement<HTMLSpanElement>();
     const [dueEl,dueRef] = useElement<HTMLSpanElement>();
+    const [posterEl,posterRef] = useElement<HTMLDivElement>();
     const shortsContext = useContext(ShortsContext);
-
+    const posterVideoRef = useRef<I_ShortsVideoRef>(null); // 포스터용 비디오
+    
     const fn = {
         timeText(sec_:number){
             if(sec_<0) return "00:00";
@@ -24,36 +28,47 @@ export default forwardRef(function(props_:T_timelineProps,ref){
             return min+":"+sec;
         },
         getSeek(e:React.TouchEvent<HTMLProgressElement>){
-            if (e.target instanceof Element) {
-                const duration = shortsContext.shortsVideo.duration();
-                const timelineEl = e.target;
-                const rect = timelineEl.getBoundingClientRect();
-                const touchX = e.touches[0].clientX - rect.left;
-                const maxX = rect.width;
-                const per = (touchX/maxX); // 진행률
-                return per * duration;
-            };
+            if (!(e.target instanceof Element)) return {posX_:0,seek_:0}; // 엘리먼트 아니면 그냥 0 던져줌
+            const duration = shortsContext.shortsVideo.duration();
+            const {left,width} = e.target.getBoundingClientRect();
+            const touchX = e.touches[0].clientX - left;
+            const per = (touchX/width); // 진행률
+            return {posX_:touchX,seek_:per * duration};
+        },
+        setPosterLeft(posx){
+            posterEl.style.left = (posx - 30)+"px";
         }
     };
 
     const handle = {
-        seek:0,
-        paused:false,
-        get duration(){
-            return shortsContext.shortsVideo.duration();
+        _seek:0,
+        get seek(){
+            return this._seek;
         },
-        seekStart(seek_:number){
-            handle.paused = shortsContext.shortsVideo.paused(); // 일시정지인지 확인
-            handle.seek = seek_;
+        set seek(seek_:number){
+            progessEl.value = seek_;
+            this._seek = Math.floor(seek_);
+        },
+        paused:false,
+        seekStart({posX_,seek_}:{posX_:number,seek_:number}){
+            handle.paused = shortsContext.shortsVideo.paused(); // 일시정지 상태였는지 확인
+            handle.seek = seek_; // seek 값 지정
+            posterVideoRef.current.src( shortsContext.shortsVideo.lastSource_.player );
+            posterVideoRef.current.play();
+            fn.setPosterLeft(posX_);
             onSeekStart(); // seek 가 돌면, 일시정지가 됨.
         },
-        seekMove(seek_:number){
-            progessEl.value = handle.seek;
+        seekMove({posX_,seek_}:{posX_:number,seek_:number}){
+            handle.seek = seek_;
+            posterEl.classList.add("-show");
+            posterVideoRef.current.currentTime(seek_);
+            posterVideoRef.current.pause();
+            fn.setPosterLeft(posX_);
         },
         seekEnd(){
             shortsContext.shortsVideo.currentTime(handle.seek);
             if(!handle.paused) shortsContext.shortsVideo.play();
-            progessEl.value = handle.seek;
+            posterEl.classList.remove("-show");
             onSeekEnd();
         }
     }
@@ -97,8 +112,9 @@ export default forwardRef(function(props_:T_timelineProps,ref){
         <progress ref={progessRef} onClick={handler.click} onTouchStart={handler.touchStart} onTouchMove={handler.touchMove} onTouchEnd={handler.touchEnd} className="timeline"></progress>
         <span ref={timeRef} className="time"></span>
         <span ref={dueRef} className="due"></span>
-        <div className="poster">
-            <span className="posterTime"></span>
+        <div ref={posterRef} className="a-mpShortsPoster">
+            <M_ShortsVideo ref={posterVideoRef} isAutoplay={false} width={60} height={100} ></M_ShortsVideo>
+            <span></span>
         </div>
     </div>);
 });

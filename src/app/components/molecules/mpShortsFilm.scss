@@ -18,13 +18,3 @@
     align-items: center;
     button{display:none;}
 }
-.m-mpShortsTimeline{
-    display:flex;height:10px;position:absolute;bottom:50px;left:30px;right:30px;z-index:3;background:rgba(255,255,255,0.5);outline:1px solid red;
-    .timeline{position:relative;width:100%;appearance: none;
-        &::-webkit-progress-bar {height:10px;background: #f0f0f0;}
-        &::-webkit-progress-value {background: red;}
-    }
-    .time{position:absolute;bottom:-20px;left:0;color:#fff;}
-    .due{position:absolute;bottom:-20px;right:0;color:#fff;}
-    .poster{position:absolute;top:-20px;left:0;color:#fff;background:#fff;}
-}

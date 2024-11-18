@@ -7,16 +7,19 @@ import useElement from "../../hooks/useElement";
 export type I_ShortsVideoProps = {
     source?:string,
     poster?:string,
-    isAutoplay?:boolean
+    isAutoplay?:boolean,
+    width?:number,
+    height?:number
 };
 
 export interface I_ShortsVideoRef {
     readonly video:Player,
     readonly el:Element,
     play():void,
+    pause():void,
     src(source_:string):void,
     poster(poster_:string):void,
-    pause():void
+    currentTime(time_:number):void
 };
 
 export default forwardRef(function(props_:I_ShortsVideoProps,ref){
@@ -51,6 +54,9 @@ export default forwardRef(function(props_:I_ShortsVideoProps,ref){
         },
         pause(){
             video.current.pause();
+        },
+        currentTime(time_:number){
+            video.current.currentTime(time_);
         }
     })); // 부모에게 핸들 전달
 
