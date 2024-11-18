@@ -7,6 +7,7 @@ import M_ShortsVideo , {I_ShortsVideoRef} from "../molecules/ShortsVideo";
 import M_mpShortsFilm , {I_mpShortsFilmRef} from "../molecules/mpShortsFilm";
 
 export default forwardRef(function mpShortsSwiper(props_,ref) {
+    console.log("mpShortsSwiper");
     // props
     const Props = {
         data:null,

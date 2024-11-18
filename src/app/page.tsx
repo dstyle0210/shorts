@@ -5,6 +5,7 @@ import 'video.js/dist/video-js.css';
 import T_mpShorts from "./components/template/mpShortsVer4";
 
 export default function MpShortsPage() {
+    console.log("MpShortsPage");
     const [shorts,setShorts] = useState<T_videos>([]);
 
     const updateData = () => {
