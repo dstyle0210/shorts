@@ -4,8 +4,12 @@ import "./mpShortsFilm.scss";
 import M_timeline  from "../molecules/timeline";
 
 export type T_mpShortsFilmProps = {
-    onPause():void,
-    onPlay():void
+    propEvent:{
+        pause():void,
+        play():void,
+        disable():void,
+        enable():void
+    }
 }
 
 export interface I_mpShortsFilmRef {
@@ -15,7 +19,7 @@ export interface I_mpShortsFilmRef {
 export default forwardRef(function mpShortsFilm(props_:T_mpShortsFilmProps,ref){
     const [filmEl,filmRef] = useElement<HTMLDivElement>();
     const [timelineEl,timelineRef] = useElement<HTMLProgressElement>();
-    const {onPause,onPlay} = props_;
+    const {propEvent} = props_;
 
     const fn = {
         get isShow(){
@@ -23,7 +27,7 @@ export default forwardRef(function mpShortsFilm(props_:T_mpShortsFilmProps,ref){
         },
         outTimer:null,
         setClearTimer(delay:number){
-            fn.outTimer = setTimeout(fn.clear,delay);
+            fn.outTimer = setTimeout(fn.hide,delay);
         },
         clear(){
             clearTimeout(fn.outTimer);
@@ -38,9 +42,11 @@ export default forwardRef(function mpShortsFilm(props_:T_mpShortsFilmProps,ref){
                 fn.clear().add("-hold");
             };
             fn.setClearTimer(3000);
+            propEvent.disable();
         },
         hide(){
             fn.clear();
+            propEvent.enable();
         },
         hold(){
             fn.clear().add("-hold");
@@ -60,17 +66,17 @@ export default forwardRef(function mpShortsFilm(props_:T_mpShortsFilmProps,ref){
         toggle:fn.toggle,
         hide:fn.hide,
         pause(){
-            onPause();
+            propEvent.pause();
             fn.videoState = "pause";
             fn.hold();
         },
         play(){
-            onPlay();
+            propEvent.play();
             fn.videoState = "play";
             fn.setClearTimer(1000);
         },
         seek(){
-            onPause();
+            propEvent.pause();
             fn.seek();
         }
     }

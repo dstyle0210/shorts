@@ -69,6 +69,12 @@ export default forwardRef(function mpShortsSwiper(props_,ref) {
         },
         play(){
             shortsVideoRef.current.play();
+        },
+        disable(){
+            swiperObj.current.disable();
+        },
+        enable(){
+            swiperObj.current.enable();
         }
     }
 
@@ -112,7 +118,7 @@ export default forwardRef(function mpShortsSwiper(props_,ref) {
                 <M_ShortsVideo ref={shortsVideoRef} source={data.length ? data[0].sources[0] : ""} isAutoplay={true} ></M_ShortsVideo>
                 <M_ShortsVideo ref={prevVideoRef} isAutoplay={false} ></M_ShortsVideo>
                 <M_ShortsVideo ref={nextVideoRef} isAutoplay={false} ></M_ShortsVideo>
-                <M_mpShortsFilm ref={filmRef} onPause={handle.pause} onPlay={handle.play}></M_mpShortsFilm>
+                <M_mpShortsFilm ref={filmRef} propEvent={handle}></M_mpShortsFilm>
             </div>
         </div>
     );
